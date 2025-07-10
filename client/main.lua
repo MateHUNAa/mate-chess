@@ -11,6 +11,7 @@ local player_1 = "WHITE"
 local palyer_2 = "BLACK"
 
 require("client.GetMoves")
+local Check = require("client.check")
 
 Citizen.CreateThread((function()
      local id = "chess"
@@ -46,7 +47,7 @@ Citizen.CreateThread((function()
                          local color = state.currentPlayer
 
                          for _, move in ipairs(allMoves) do
-                              if not CausesCheck(id, cell, move, color) then
+                              if not Check.CausesCheck(id, cell, move, color) then
                                    table.insert(validMoves, move)
                               end
                          end
@@ -64,24 +65,24 @@ Citizen.CreateThread((function()
                     local destMeta = G:ReadCell(id, cell)
                     if destMeta.isHighlighted then
                          if MovePiece(id, selectedCell, cell) then
-                              selectedCell = nil
                               ClearHighlights(id)
-                         end
+                              selectedCell = nil
 
-                         local gameState = GetGameState(id)
+                              local gameState = GetGameState(id)
 
-                         if IsKingInCheck(id, gameState.currentPlayer) then
-                              print(("^1[Check]^0 %s is in CHECK !"):format(gameState.currentPlayer))
-                         end
+                              if Check.IsKingInCheckMock(Check.CloneBoard(id), gameState.currentPlayer) then
+                                   print(("^1[Check]^0 %s is in CHECK !"):format(gameState.currentPlayer))
+                              end
 
-                         if IsCheckmate(id, gameState.currentPlayer) then
-                              print(("^1[Checkmate]^0 %s is in CHECKMATE!"):format(gameState.currentPlayer))
-                              -- TODO: Game end ! Trigger GameWin
+                              if Check.IsCheckmate(id, gameState.currentPlayer) then
+                                   print(("^1[Checkmate]^0 %s is in CHECKMATE!"):format(gameState.currentPlayer))
+                                   -- TODO: Trigger game win logic!
+                              end
                          end
                     else
-                         print("Invalid Move target !")
-                         selectedCell = nil
+                         print("Invalid Move target!")
                          ClearHighlights(id)
+                         selectedCell = nil
                     end
                end
           end),
@@ -123,11 +124,6 @@ Citizen.CreateThread((function()
 
                if cellMeta.simulate then
                     return
-               end
-
-               if cellMeta.isHighlighted then
-                    -- mCore.Draw3DText(cell.position.x, cell.position.y, cell.position.z + 0.2,
-                    --      "◉", 0, 255, 0, false, 4)
                end
 
                if pieceType and pieceColor then
