@@ -70,13 +70,13 @@ Citizen.CreateThread((function()
 
                               local gameState = GetGameState(id)
 
-                              if Check.IsKingInCheckMock(Check.CloneBoard(id), gameState.currentPlayer) then
-                                   print(("^1[Check]^0 %s is in CHECK !"):format(gameState.currentPlayer))
-                              end
-
                               if Check.IsCheckmate(id, gameState.currentPlayer) then
                                    print(("^1[Checkmate]^0 %s is in CHECKMATE!"):format(gameState.currentPlayer))
                                    -- TODO: Trigger game win logic!
+                              end
+
+                              if Check.IsKingInCheckMock(Check.CloneBoard(id), gameState.currentPlayer) then
+                                   print(("^1[Check]^0 %s is in CHECK !"):format(gameState.currentPlayer))
                               end
                          end
                     else
@@ -121,10 +121,6 @@ Citizen.CreateThread((function()
                local cellMeta   = G:ReadCell(id, cell)
                local pieceType  = cellMeta and cellMeta["piece"]
                local pieceColor = cellMeta and cellMeta["color"]
-
-               if cellMeta.simulate then
-                    return
-               end
 
                if pieceType and pieceColor then
                     mCore.Draw3DText(cell.position.x, cell.position.y, cell.position.z,

@@ -124,7 +124,16 @@ function check.GetPossibleMovesMock(board, fromCell, color)
     local pieceType = meta.piece
     local moves = {}
 
-    if pieceType == "pawn" then
+    if pieceType == "rook" then
+        moves = check.GetRookMovesMock(board, fromCell, color)
+    elseif pieceType == "bishop" then
+        moves = check.GetBishopMovesMock(board, fromCell, color)
+    elseif pieceType == "queen" then
+        local rookMoves = check.GetRookMovesMock(board, fromCell, color)
+        local bishopMoves = check.GetBishopMovesMock(board, fromCell, color)
+        for _, m in ipairs(bishopMoves) do table.insert(rookMoves, m) end
+        moves = rookMoves
+    elseif pieceType == "pawn" then
         local dir = (color == "WHITE") and -1 or 1
         local startRow = (color == "WHITE") and 6 or 1
 
@@ -152,43 +161,6 @@ function check.GetPossibleMovesMock(board, fromCell, color)
                 end
             end
         end
-    elseif pieceType == "rook" then
-        local dirs = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }
-        for _, dir in ipairs(dirs) do
-            local r, c = fromCell.row + dir[1], fromCell.col + dir[2]
-            while r >= 0 and r <= 7 and c >= 0 and c <= 7 do
-                local m = board[r][c]
-                if m.occupied then
-                    if m.color ~= color then table.insert(moves, { row = r, col = c }) end
-                    break
-                end
-                table.insert(moves, { row = r, col = c })
-                r = r + dir[1]
-                c = c + dir[2]
-                Wait(1)
-            end
-        end
-    elseif pieceType == "bishop" then
-        local dirs = { { 1, 1 }, { 1, -1 }, { -1, 1 }, { -1, -1 } }
-        for _, dir in ipairs(dirs) do
-            local r, c = fromCell.row + dir[1], fromCell.col + dir[2]
-            while r >= 0 and r <= 7 and c >= 0 and c <= 7 do
-                local m = board[r][c]
-                if m.occupied then
-                    if m.color ~= color then table.insert(moves, { row = r, col = c }) end
-                    break
-                end
-                table.insert(moves, { row = r, col = c })
-                r = r + dir[1]
-                c = c + dir[2]
-                Wait(1)
-            end
-        end
-    elseif pieceType == "queen" then
-        local rookMoves = check.GetPossibleMovesMock(board, fromCell, color)
-        local bishopMoves = check.GetPossibleMovesMock(board, fromCell, color)
-        for _, move in ipairs(bishopMoves) do table.insert(rookMoves, move) end
-        moves = rookMoves
     elseif pieceType == "knight" then
         local offsets = {
             { -2, -1 }, { -2, 1 }, { -1, -2 }, { -1, 2 }, { 1, -2 }, { 1, 2 }, { 2, -1 }, { 2, 1 }
@@ -218,6 +190,44 @@ function check.GetPossibleMovesMock(board, fromCell, color)
         end
     end
 
+    return moves
+end
+
+function check.GetRookMovesMock(board, fromCell, color)
+    local moves = {}
+    local dirs = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }
+    for _, dir in ipairs(dirs) do
+        local r, c = fromCell.row + dir[1], fromCell.col + dir[2]
+        while r >= 0 and r <= 7 and c >= 0 and c <= 7 do
+            local m = board[r][c]
+            if m.occupied then
+                if m.color ~= color then table.insert(moves, { row = r, col = c }) end
+                break
+            end
+            table.insert(moves, { row = r, col = c })
+            r = r + dir[1]
+            c = c + dir[2]
+        end
+    end
+    return moves
+end
+
+function check.GetBishopMovesMock(board, fromCell, color)
+    local moves = {}
+    local dirs = { { 1, 1 }, { 1, -1 }, { -1, 1 }, { -1, -1 } }
+    for _, dir in ipairs(dirs) do
+        local r, c = fromCell.row + dir[1], fromCell.col + dir[2]
+        while r >= 0 and r <= 7 and c >= 0 and c <= 7 do
+            local m = board[r][c]
+            if m.occupied then
+                if m.color ~= color then table.insert(moves, { row = r, col = c }) end
+                break
+            end
+            table.insert(moves, { row = r, col = c })
+            r = r + dir[1]
+            c = c + dir[2]
+        end
+    end
     return moves
 end
 
