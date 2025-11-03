@@ -10,7 +10,7 @@ function check.CloneBoard(id)
     for row = 0, 7 do
         clone[row] = {}
         for col = 0, 7 do
-            local meta = G:ReadCell(id, { row = row, col = col })
+            local meta = activeGrid:ReadCell({ row = row, col = col })
             clone[row][col] = {
                 piece = meta.piece,
                 color = meta.color,
@@ -93,17 +93,17 @@ end
 -- Checkmate: is king in check and no legal moves left?
 ---------------------------------------------------------------
 function check.IsCheckmate(id, color)
-    if not check.IsKingInCheckMock(check.CloneBoard(id, G), color) then
+    if not check.IsKingInCheckMock(check.CloneBoard(id), color) then
         return false
     end
 
     for row = 0, 7 do
         for col = 0, 7 do
-            local meta = G:ReadCell(id, { row = row, col = col })
+            local meta = activeGrid:ReadCell({ row = row, col = col })
             if meta.occupied and meta.color == color then
-                local moves = check.GetPossibleMovesMock(check.CloneBoard(id, G), { row = row, col = col }, color)
+                local moves = check.GetPossibleMovesMock(check.CloneBoard(id), { row = row, col = col }, color)
                 for _, move in ipairs(moves) do
-                    if not check.CausesCheck(id, { row = row, col = col }, move, color, G) then
+                    if not check.CausesCheck(id, { row = row, col = col }, move, color) then
                         return false
                     end
                 end

@@ -1,17 +1,17 @@
-ESX   = exports['es_extended']:getSharedObject()
-mCore = exports["mCore"]:getSharedObj()
+ESX              = exports['es_extended']:getSharedObject()
+mCore            = exports["mCore"]:getSharedObj()
 
-lang  = Loc[Config.lan]
+lang             = Loc[Config.lan]
 
-
-G = exports["mate-grid"]
 local chessCache = {}
 
-local player_1 = "WHITE"
-local palyer_2 = "BLACK"
+local player_1   = "WHITE"
+local player_2   = "BLACK"
 
 require("client.GetMoves")
 local Check = require("client.check")
+
+activeGrid = nil
 
 Citizen.CreateThread((function()
      local id = "chess"
@@ -25,128 +25,147 @@ Citizen.CreateThread((function()
 
      local selectedCell = nil
 
-     G:AddGrid({
-          id = id,
-          pos = vector3(105.44, -1940.72, 19.81),
-          rows = 8,
-          cols = 8,
-          checkAimDistance = false,
-          onClick = (function(cell, btn)
-               print(("%s:%s Clicked"):format(cell.row, cell.col))
+     local grid = Grid:new(vector3(105.44, -1940.72, 19.81), 8, 8)
 
-               if not selectedCell then
-                    if CanPlayerMovePiece(id, cell) then
-                         selectedCell = cell
-                         ClearHighlights(id)
-                         G:SetSquare(id, cell, { 0, 100, 255, 150 }, true)
+     grid:UpdateGridData("id", id)
 
-                         local allMoves = GetPossibleMoves(id, cell)
-                         local validMoves = {}
+     activeGrid = grid
 
-                         local state = GetGameState(id)
-                         local color = state.currentPlayer
+     grid.onClick = (function(cell, btn)
+          print(("%s:%s Clicked"):format(cell.row, cell.col))
 
-                         for _, move in ipairs(allMoves) do
-                              if not Check.CausesCheck(id, cell, move, color) then
-                                   table.insert(validMoves, move)
-                              end
+          if not selectedCell then
+               if CanPlayerMovePiece(grid, cell) then
+                    selectedCell = cell
+                    ClearHighlights(grid)
+                    grid:setSquare(cell, { 0, 100, 255, 150 }, true)
+
+                    local allMoves = GetPossibleMoves(id, cell)
+                    local validMoves = {}
+
+                    local state = GetGameState(grid)
+                    local color = state.currentPlayer
+
+                    for _, move in ipairs(allMoves) do
+                         if not Check.CausesCheck(id, cell, move, color) then
+                              table.insert(validMoves, move)
+                         end
+                    end
+
+                    for _, move in ipairs(validMoves) do
+                         grid:WriteCell(move, "isHighlighted", true)
+
+                         local moveMeta = grid:ReadCell(move)
+                         if moveMeta.color ~= color and moveMeta.occupied then
+                              grid:setSquare(move.row, move.col, { 255, 40, 40, 120 }, true)
+                         else
+                              grid:setSquare(move.row, move.col, { 255, 100, 50, 120 }, true)
+                         end
+                    end
+
+                    print(("Highlighted %s valid moves (checked for king safety)"):format(#validMoves))
+               end
+          else
+               -- TryMove
+
+               local destMeta = grid:ReadCell(cell)
+               if destMeta.isHighlighted then
+                    if MovePiece(grid, selectedCell, cell) then
+                         ClearHighlights(grid)
+                         selectedCell = nil
+
+                         local gameState = GetGameState(grid)
+
+                         if Check.IsCheckmate(id, gameState.currentPlayer) then
+                              print(("^1[Checkmate]^0 %s is in CHECKMATE!"):format(gameState.currentPlayer))
+                              chessCache[id].currentPlayer = "NONE"
+                              grid:UpdateGridData("gameState", chessCache[id])
+                              -- TODO: Destroy board, Handle Winner, Handle UI
                          end
 
-                         for _, move in ipairs(validMoves) do
-                              G:WriteCell(id, move, "isHighlighted", true)
-                              G:SetSquare(id, move, { 255, 100, 50, 120 }, true)
+                         if Check.IsKingInCheckMock(Check.CloneBoard(id), gameState.currentPlayer) then
+                              print(("^1[Check]^0 %s is in CHECK !"):format(gameState.currentPlayer))
                          end
-
-                         print(("Highlighted %s valid moves (checked for king safety)"):format(#validMoves))
                     end
                else
-                    -- TryMove
-
-                    local destMeta = G:ReadCell(id, cell)
-                    if destMeta.isHighlighted then
-                         if MovePiece(id, selectedCell, cell) then
-                              ClearHighlights(id)
-                              selectedCell = nil
-
-                              local gameState = GetGameState(id)
-
-                              if Check.IsCheckmate(id, gameState.currentPlayer) then
-                                   print(("^1[Checkmate]^0 %s is in CHECKMATE!"):format(gameState.currentPlayer))
-                                   -- TODO: Trigger game win logic!
-                              end
-
-                              if Check.IsKingInCheckMock(Check.CloneBoard(id), gameState.currentPlayer) then
-                                   print(("^1[Check]^0 %s is in CHECK !"):format(gameState.currentPlayer))
-                              end
-                         end
-                    else
-                         print("Invalid Move target!")
-                         ClearHighlights(id)
-                         selectedCell = nil
-                    end
+                    print("Invalid Move target!")
+                    ClearHighlights(grid)
+                    selectedCell = nil
                end
-          end),
-          onHoldComplete = (function(cell)
-               print(("^2Hold Complete on %s:%s^0"):format(cell.row, cell.col))
+          end
+     end)
 
-               print(json.encode(G:ReadCell(id, cell), { indent = true }))
-          end),
-          onHover = (function(cell, isNew)
-               if not cell then goto continue end
+     grid.onHoldComplete = (function(cell)
+          print(("^2Hold Complete on %s:%s^0"):format(cell.row, cell.col))
 
-               if isNew then
-                    local cellMeta = G:ReadCell(id, cell)
+          print(json.encode(grid:ReadCell(cell), { indent = true }))
+     end)
+
+     grid.onHover = (function(cell, isNew)
+          if not cell then goto continue end
+
+          if isNew then
+               local cellMeta = grid:ReadCell(cell)
 
 
 
-                    if not cellMeta.occupied then
-                         G:UpdateGridData(id, "hoverColor", { 0, 200, 255, 100 })
-                         goto continue
-                    end
-
-                    if CanPlayerMovePiece(id, cell) then
-                         local oldVal, newVal = G:UpdateGridData(id, "hoverColor", { 0, 255, 0, 100 })
-
-                         chessCache[id] = chessCache[id] or {}
-                         chessCache[id]["hoverColor_old"] = oldVal
-                    else
-                         local oldVal, newVal = G:UpdateGridData(id, "hoverColor", { 255, 10, 0, 100 })
-                         chessCache[id] = chessCache[id] or {}
-                         chessCache[id]["hoverColor_old"] = oldVal
-                    end
+               if not cellMeta.occupied then
+                    grid:UpdateGridData("hoverColor", { 0, 200, 255, 100 })
+                    goto continue
                end
-               ::continue::
-          end),
-          customDraw = (function(cell)
-               local cellMeta   = G:ReadCell(id, cell)
-               local pieceType  = cellMeta and cellMeta["piece"]
-               local pieceColor = cellMeta and cellMeta["color"]
 
-               if pieceType and pieceColor then
-                    mCore.Draw3DText(cell.position.x, cell.position.y, cell.position.z,
-                         ("%s (%s)"):format(pieceType, pieceColor), 255, 255, 255, false, 4)
+               if CanPlayerMovePiece(grid, cell) then
+                    local oldVal, newVal = grid:UpdateGridData("hoverColor", { 0, 255, 0, 100 })
+
+                    chessCache[id] = chessCache[id] or {}
+                    chessCache[id]["hoverColor_old"] = oldVal
+               else
+                    local oldVal, newVal = grid:UpdateGridData("hoverColor", { 255, 10, 0, 100 })
+                    chessCache[id] = chessCache[id] or {}
+                    chessCache[id]["hoverColor_old"] = oldVal
                end
-          end)
-     })
+          end
+          ::continue::
+     end)
 
-     SetupChessBoard(id)
+     grid.customDraw = (function(cell)
+          local cellMeta   = grid:ReadCell(cell)
+          local pieceType  = cellMeta and cellMeta["piece"]
+          local pieceColor = cellMeta and cellMeta["color"]
+
+          if pieceType and pieceColor then
+               mCore.Draw3DText(cell.position.x, cell.position.y, cell.position.z,
+                    ("%s (%s)"):format(pieceType, pieceColor), 255, 255, 255, false, 4)
+          end
+     end)
+
+
+     SetupChessBoard(grid)
+
+     while true do
+          grid:update()
+          Wait(1)
+     end
 end))
 
-function CanPlayerMovePiece(id, cell)
+function CanPlayerMovePiece(grid, cell)
      if not cell then return false end
-     local cellMeta = G:ReadCell(id, cell)
-     local state = GetGameState(id)
+     local cellMeta = grid:ReadCell(cell)
+     local state = GetGameState(grid)
 
      if not state then return false end
 
      return cellMeta.color == state.currentPlayer
 end
 
-function SetupChessBoard(id)
+---@param grid Grid
+function SetupChessBoard(grid)
      local pieces <const> = {
+          -- WHITE
           [0] = { "rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook" },
           [1] = { "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn" },
           -- Rows 2-5 empty
+          -- BLACK
           [6] = { "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn" },
           [7] = { "rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook" },
      }
@@ -160,14 +179,14 @@ function SetupChessBoard(id)
                if piece then
                     local color = row < 2 and "WHITE" or "BLACK"
 
-                    G:WriteCell2(id, cell, {
+                    grid:WriteCell2(cell, {
                          ["piece"] = piece,
                          ["color"] = color,
                          ["occupied"] = true,
                          ["tableOwner"] = GetPlayerServerId(PlayerId())
                     })
                else
-                    G:WriteCell2(id, cell, {
+                    grid:WriteCell2(cell, {
                          ["piece"] = nil,
                          ["color"] = nil,
                          ["occupied"] = false,
@@ -177,24 +196,25 @@ function SetupChessBoard(id)
           end
      end
 
-     G:UpdateGridData(id, "gameState", chessCache[id].gameState)
+     grid:UpdateGridData("gameState", chessCache[grid.id].gameState)
 
-     print(("Chess board has been setuped for '%s'"):format(id))
+     print(("Chess board has been setuped for '%s'"):format(grid.id))
 end
 
-function GetGameState(id)
-     return G:ReadGridData(id, "gameState")
+function GetGameState(grid)
+     return grid:ReadGridData("gameState")
 end
 
-function MovePiece(id, fromCell, toCell)
-     local fromMeta = G:ReadCell(id, fromCell)
+function MovePiece(grid, fromCell, toCell)
+     local id = grid.id
+     local fromMeta = grid:ReadCell(fromCell)
 
      if not fromMeta or not fromMeta.piece then
           print("^1[MovePiece]^0 No piece to move in fromCell!")
           return false
      end
 
-     local gameState = GetGameState(id)
+     local gameState = GetGameState(grid)
      if not gameState then
           print("^1[MovePiece]^0 No game state!")
           return false
@@ -205,7 +225,7 @@ function MovePiece(id, fromCell, toCell)
           return false
      end
 
-     local toMeta = G:ReadCell(id, toCell)
+     local toMeta = grid:ReadCell(toCell)
      if toMeta and toMeta.occupied and toMeta.color == gameState.currentPlayer then
           print("^1[MovePiece]^0 Can't capture your own piece!")
           return false
@@ -215,7 +235,7 @@ function MovePiece(id, fromCell, toCell)
      if toMeta.occupied and toMeta.color ~= gameState.currentPlayer then
           print(("%s captured %s at %s:%s"):format(fromMeta.piece, toMeta.piece, toCell.row, toCell.col))
 
-          G:WriteCell2(id, toCell, {
+          grid:WriteCell2(toCell, {
                piece = false,
                color = false,
                occupied = false,
@@ -229,24 +249,22 @@ function MovePiece(id, fromCell, toCell)
           })
      end
 
-
-     G:WriteCell2(id, fromCell, {
-          piece = false,
-          color = false,
-          occupied = false,
+     grid:WriteCell2(toCell, {
+          piece      = fromMeta.piece,
+          color      = fromMeta.color,
+          occupied   = true,
           tableOwner = fromMeta.tableOwner
      })
 
-
-     G:WriteCell2(id, toCell, {
-          piece = fromMeta.piece,
-          color = fromMeta.color,
-          occupied = true,
+     grid:WriteCell2(fromCell, {
+          piece      = false,
+          color      = false,
+          occupied   = false,
           tableOwner = fromMeta.tableOwner
      })
 
      gameState.currentPlayer = (gameState.currentPlayer == "WHITE") and "BLACK" or "WHITE"
-     G:UpdateGridData(id, "gameState", gameState)
+     grid:UpdateGridData("gameState", gameState)
 
      print(("^2[MovePiece]^0 %s moved from %s:%s to %s:%s. Next player: %s"):format(
           fromMeta.piece, fromCell.row, fromCell.col, toCell.row, toCell.col, gameState.currentPlayer
@@ -255,11 +273,11 @@ function MovePiece(id, fromCell, toCell)
      return true
 end
 
-function ClearHighlights(id)
+function ClearHighlights(grid)
      for row = 0, 7 do
           for col = 0, 7 do
-               G:WriteCell(id, { row = row, col = col }, "isHighlighted", false)
-               G:SetSquare(id, { row = row, col = col }, nil, false)
+               grid:WriteCell({ row = row, col = col }, "isHighlighted", false)
+               grid:setSquare(row, col, nil, false)
           end
      end
 end

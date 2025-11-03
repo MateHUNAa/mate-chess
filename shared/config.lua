@@ -1,3 +1,8 @@
+
+---@alias Languages "en" | "hu"
+---@alias LanType "error" | "success" | "info" | "warning"
+
+
 Config = {
      lan = "en",
      PedRenderDistance = 80.0,
@@ -16,7 +21,12 @@ Config.ApprovedLicenses = {
      "xbl:123"
 }
 
-
+Config.StartBoard = {
+     [0] = { "rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook" },
+     [1] = { "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn" },
+     [6] = { "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn" },
+     [7] = { "rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook" },
+}
 
 
 Loc = {}

@@ -1,5 +1,7 @@
 Loc["en"] = {
-     error   = {},
+     error   = {
+          ["noTarget"] = "Please specify your opponent !"
+     },
      success = {},
      info    = {},
      warning = {},

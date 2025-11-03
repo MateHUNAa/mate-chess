@@ -14,12 +14,15 @@ shared_scripts {
 
 server_scripts {
     "server/functions.lua",
+    "server/init.lua",
+    "server/helpers/*.lua",
     "server/main.lua",
 }
 
 client_scripts {
     "client/functions.lua",
     "client/main.lua",
+    "@mate-grid/init.lua"
 }
 
 server_script "@oxmysql/lib/MySQL.lua"
