@@ -23,7 +23,7 @@ local function serialize(value, indent)
 end
 
 local function printLog(level, msg, ...)
-    local prefix = ("[^2Factions^0] [^3%s^0]: "):format(level)
+    local prefix = ("[^2Chess^0] [^3%s^0]: "):format(level)
 
     local parts = {}
 

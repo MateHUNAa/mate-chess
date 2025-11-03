@@ -21,6 +21,10 @@ Config.ApprovedLicenses = {
      "xbl:123"
 }
 
+Config.cellSize = 0.568
+
+Config.MaxDistance = 10.0
+
 Config.StartBoard = {
      [0] = { "rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook" },
      [1] = { "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn" },

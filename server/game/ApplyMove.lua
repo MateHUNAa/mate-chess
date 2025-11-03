@@ -1,6 +1,6 @@
-local Helper = require("helpers.main")
-local Moves  = require("game.GetMoves")
-local Check  = require("game.CheckLogic")
+local Helper = require("server.helpers.main")
+local Moves  = require("server.game.GetMoves")
+local Check  = require("server.game.CheckLogic")
 
 
 ---@param gameId string

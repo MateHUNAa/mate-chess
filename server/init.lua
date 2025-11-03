@@ -9,6 +9,7 @@ lan    = Loc[Config.lan]
 ---@class Game
 ---@field lock boolean
 ---@field board Board[][]
+---@field centerPos vector4
 ---@field gameState { currentPlayer: Colors, boardCreator: Colors}
 ---@field players table<string, Player>
 ---@field captures table

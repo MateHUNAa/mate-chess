@@ -1,5 +1,5 @@
-local Helper = require("helpers.main")
-local Moves  = require("game.GetMoves")
+local Helper = require("server.helpers.main")
+local Moves  = require("server.game.GetMoves")
 
 
 local CheckLogic = {}
