@@ -27,7 +27,6 @@ client_scripts {
 }
 
 dependencies {
-    'mCore',
     'oxmysql',
     'ox_lib',
     'mate-grid'

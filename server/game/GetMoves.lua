@@ -32,8 +32,8 @@ end
 
 function Moves.GetPawnMoves(id, cell, color)
      local moves    = {}
-     local dir      = (color == "WHITE") and 1 or -1
-     local startRow = (color == "WHITE") and 1 or 6
+     local dir      = (color == "white") and 1 or -1
+     local startRow = (color == "white") and 1 or 6
 
      local oneStep  = { row = cell.row + dir, col = cell.col }
      local twoStep  = { row = cell.row + 2 * dir, col = cell.col }

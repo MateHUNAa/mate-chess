@@ -16,7 +16,6 @@ require("server.game.ApplyMove")
 ---@param tablePosition vector4
 RegisterNetEvent("mate-chess:CreateGame", function(target, tablePosition)
      if not target then
-          mCore.Notify(source, lang.Title, lan["error"]["noTarget"], "error", 5000)
           Logger:Debug("No Target")
           return
      end
@@ -67,11 +66,11 @@ RegisterNetEvent("mate-chess:CreateGame", function(target, tablePosition)
 
      Logger:Debug("Game created !", Games[id])
 
-     TriggerClientEvent('mate-chess:gameCreated', source, id, "white")
-     TriggerClientEvent('mate-chess:gameCreated', target, id, "black")
+     TriggerClientEvent('mate-chess:GameCreated', source, id, "white")
+     TriggerClientEvent('mate-chess:GameCreated', target, id, "black")
 
-     TriggerClientEvent('mate-chess:syncFullState', source, id, Games[id])
-     TriggerClientEvent('mate-chess:syncFullState', target, id, Games[id])
+     TriggerClientEvent('mate-chess:SyncFullState', source, id, Games[id])
+     TriggerClientEvent('mate-chess:SyncFullState', target, id, Games[id])
 
      Logger:Info(("Created chess game %s between %s(%s) (WHITE) and %s(%s) (BLACK)"):format(id,
           GetPlayerName(source), source,
@@ -80,12 +79,38 @@ RegisterNetEvent("mate-chess:CreateGame", function(target, tablePosition)
 end)
 
 
-RegisterNetEvent('mate-chess:RequestMove', function(gameId, fromCell, toCell)
-     local success, msg = ApplyMove(gameId, fromCell, toCell, source)
+RegisterNetEvent('mate-chess:RequestMoves', function(gameId, fromCell)
+     local source = source
+     local game = Games[gameId]
+     if not game then
+          return Logger:Warning(("Player %s requested moves for invalid game %s"):format(source, gameId))
+     end
 
-     TriggerClientEvent('mate-chess:moveResult', source, success, msg)
+
+     local player = game.players[tostring(source)]
+     if not player then
+          return Logger:Warning(("Player %s not part of game %s"):format(source, gameId))
+     end
+
+     if game.gameState.currentPlayer ~= player.color then
+          return Logger:Debug(("Player %s tried to request moves out of turn."):format(source))
+     end
+
+     local moves = Moves.GetPossibleMoves(gameId, fromCell)
+     Logger:Debug("Moves:", moves)
+     if not moves or #moves == 0 then
+          return Logger:Debug(("No moves found for %s at %s"):format(player.color, json.encode(fromCell)))
+     end
+
+     TriggerClientEvent("mate-chess:ShowMoves", source, moves)
 end)
 
+RegisterNetEvent("mate-chess:TryMove", function(gameId, fromCell, toCell)
+     local source = source
+     local success, msg = ApplyMove(gameId, fromCell, toCell, source)
+
+     TriggerClientEvent('mate-chess:MoveResult', source, success, msg)
+end)
 
 lib.callback.register("mate-chess:IsGameExists", (function(source, gameId)
      if Games[gameId] and next(Games[gameId]) ~= nil then

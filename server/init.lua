@@ -1,5 +1,3 @@
-ESX    = exports['es_extended']:getSharedObject()
-mCore  = exports["mCore"]:getSharedObj()
 Logger = require("shared.Logger")
 lan    = Loc[Config.lan]
 
