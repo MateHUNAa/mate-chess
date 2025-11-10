@@ -33,26 +33,22 @@ Config.StartBoard = {
 }
 
 Config.Models = {
-     local Models = {
-         ["WHITE"] = {
+     ["white"] = {
              rook = "white_rock",
              knight = "white_knight",
              bishop = "white_bishop",
              queen = "white_queen",
              king = "white_king",
              pawn = "white_pawn"
-         },
-         ["BLACK"] = {
+     },
+     ["black"] = {
              rook = "black_rock",
              knight = "black_knight",
              bishop = "black_bishop",
              queen = "black_queen",
              king = "black_king",
              pawn = "black_pawn"
-         }
      }
-
 }
-
 
 Loc = {}
