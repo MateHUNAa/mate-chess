@@ -84,11 +84,13 @@ function ApplyMove(gameId, fromCell, toCell, playerId)
                :format(player.color, json.encode(fromCell), json.encode(toCell), nextTurn))
      end))
 
+     Logger:Debug("GameBoard", Games[gameId].board)
+
      local inCheck     = Check.IsCheck(gameId, nextTurn)
      local inCheckmate = inCheck and Check.IsCheckmate(gameId, nextTurn)
 
      for playerId, _ in pairs(game.players) do
-          TriggerClientEvent("mate-chess:UpdateBoard", tonumber(pid), game.board, {
+          TriggerClientEvent("mate-chess:UpdateBoard", tonumber(playerId), game.board, {
                currentTurn = nextTurn,
                lastMove    = { from = fromCell, to = toCell },
                inCheck     = inCheck,

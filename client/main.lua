@@ -6,7 +6,10 @@ local activeGrid   = nil
 local myColor      = nil
 local selectedCell = nil
 
-local modelCache = {}
+local defaultColor       = { 255, 0, 0, 150 }
+local selectedColor      = { 0, 100, 255, 150 }
+local takeHighlightColor = { 255, 40, 40, 120 }
+local highlightColor     = { 255, 100, 50, 120 }
 
 
 ---@param gameId string

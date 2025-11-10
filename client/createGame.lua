@@ -48,10 +48,10 @@ RegisterKeyMapping("+chess_ConfirmPlacement", "Confirm placement", "keyboard", "
 
 
 function StartCreateChessGame()
-     local players = lib.getNearbyPlayers(GetEntityCoords(cache.ped), Config.MaxDistance, true)
+     local players = lib.getNearbyPlayers(GetEntityCoords(cache.ped), Config.MaxDistance, false)
 
      if #players <= 0 then
-          return Error(lan["error"]["no_nrby_players"])
+          return print(lan["error"]["no_nrby_players"])
      end
 
      local rows = {}
@@ -69,7 +69,7 @@ function StartCreateChessGame()
      local input = lib.inputDialog("Select your opponent", rows)
 
      if not input then
-          return Error(lan["error"]["no_input"])
+          return print(lan["error"]["no_input"])
      end
 
      -- Logger:Debug(input)

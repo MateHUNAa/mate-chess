@@ -80,6 +80,7 @@ end)
 
 
 RegisterNetEvent('mate-chess:RequestMoves', function(gameId, fromCell)
+     local source = source
      local game = Games[gameId]
      if not game then
           return Logger:Warning(("Player %s requested moves for invalid game %s"):format(source, gameId))
@@ -96,6 +97,7 @@ RegisterNetEvent('mate-chess:RequestMoves', function(gameId, fromCell)
      end
 
      local moves = Moves.GetPossibleMoves(gameId, fromCell)
+     Logger:Debug("Moves:", moves)
      if not moves or #moves == 0 then
           return Logger:Debug(("No moves found for %s at %s"):format(player.color, json.encode(fromCell)))
      end
