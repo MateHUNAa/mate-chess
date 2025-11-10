@@ -1,0 +1,19 @@
+{
+     "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+     "runtime.version": "Lua 5.4",
+     "runtime.path": ["?.lua", "?/init.lua"],
+
+     "workspace.library": [
+          "C:/Natives/CFX-NATIVE",
+          "C:/Natives/GTAV",
+          "C:/Natives/runtime",
+          "E:/[Fivem]/[ServerFiles]/DMF v1.2/resources/[DEPENDENCY]/[ox]/ox_lib",
+          "E:/[Fivem]/[ServerFiles]/DMF v1.2/resources/[DEPENDENCY]/[ox]/oxmysql",
+          "E:/[Fivem]/[ServerFiles]/DMF v1.2/resources/[DEPENDENCY]/mate-grid/client",
+          "./types"
+     ],
+     "workspace.checkThirdParty": false,
+     "runtime.plugin": ["./plugin.lua"],
+
+     "diagnostics.disable": ["lowercase-global", "trailing-space"]
+}
