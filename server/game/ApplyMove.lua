@@ -88,7 +88,7 @@ function ApplyMove(gameId, fromCell, toCell, playerId)
      local inCheckmate = inCheck and Check.IsCheckmate(gameId, nextTurn)
 
      for playerId, _ in pairs(game.players) do
-          TriggerClientEvent("mate-chess:updateBoard", tonumber(pid), game.board, {
+          TriggerClientEvent("mate-chess:UpdateBoard", tonumber(pid), game.board, {
                currentTurn = nextTurn,
                lastMove    = { from = fromCell, to = toCell },
                inCheck     = inCheck,
