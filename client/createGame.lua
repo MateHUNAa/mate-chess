@@ -26,7 +26,7 @@ function StartPlace()
 
           if hit then
                outCoords = vec4(endCoords.x, endCoords.y, endCoords.z, heading)
-               exports["mate-grid"]:DrawSquare(endCoords + vec3(0, 0, 0.2), size * 8, size * 8, heading,
+               exports["mate-grid"]:DrawSquare(endCoords + vec3(0, 0, 0.35), size * 8, size * 8, heading,
                     { 255, 0, 0, 100 },
                     true, { 0, 0, 0, 255 })
           end
@@ -39,11 +39,6 @@ function StartPlace()
 
      return true, outCoords
 end
-
-RegisterCommand("chessStartPlacement", (function(src, args, raw)
-     if not mCore.isDebug() then return end
-     StartPlace()
-end))
 
 RegisterCommand("+chess_ConfirmPlacement", (function(src, args, raw)
      if not placeing then return end
@@ -101,6 +96,6 @@ exports("chessboard", (function(d, d, d)
 end))
 
 
-RegisterNetEvent("mate-chess:CreateFailed", (function (msg)
+RegisterNetEvent("mate-chess:CreateFailed", (function(msg)
      Logger:Info(msg)
-end)) 
+end))

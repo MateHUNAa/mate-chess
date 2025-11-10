@@ -62,9 +62,9 @@ function Logger:Warning(msg, ...)
 end
 
 function Logger:Debug(msg, ...)
-    if mCore.isDebug then
+    -- if mCore.isDebug then
         printLog("Debug", msg, ...)
-    end
+    -- end
 end
 
 return Logger
