@@ -7,20 +7,18 @@ description 'Template used mCore'
 version '1.0.0'
 
 shared_scripts {
-    'shared/**.*',
-    '@es_extended/imports.lua',
     '@ox_lib/init.lua'
 }
 
 server_scripts {
+     "shared/**.*",
     '@oxmysql/lib/MySQL.lua',
-    'server/functions.lua',
     'server/init.lua',
     'server/main.lua'
 }
 
 client_scripts {
-    'client/functions.lua',
+     "shared/**.*",
     'client/main.lua',
     'client/createGame.lua',
     '@mate-grid/init.lua'
@@ -35,9 +33,4 @@ dependencies {
 escrow_ignore {
     'shared/config.lua',
     '**/*.editable.lua'
-}
-
-files {
-    'client/GetMoves.lua',
-    'client/check.lua',
 }
