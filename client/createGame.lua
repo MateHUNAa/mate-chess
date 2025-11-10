@@ -25,7 +25,7 @@ function StartPlace()
           heading = (heading + 360.0) % 360.0
 
           if hit then
-               outCoords = vec4(endCoords.x, endCoords.y, endCoords.z, heading)
+               outCoords = vec4(endCoords.x, endCoords.y, endCoords.z + 0.1, heading)
                exports["mate-grid"]:DrawSquare(endCoords + vec3(0, 0, 0.35), size * 8, size * 8, heading,
                     { 255, 0, 0, 100 },
                     true, { 0, 0, 0, 255 })
