@@ -6,6 +6,8 @@ local activeGrid   = nil
 local myColor      = nil
 local selectedCell = nil
 
+local modelCache = {}
+
 local defaultColor       = { 255, 0, 0, 150 }
 local selectedColor      = { 0, 100, 255, 150 }
 local takeHighlightColor = { 255, 40, 40, 120 }
@@ -56,8 +58,6 @@ RegisterNetEvent("mate-chess:SyncFullState", (function(gameId, Game)
      activeGrid = Grid:new(Game.centerPos.xyz, 8, 8, Config.cellSize, Config.cellSize, Game.centerPos.w)
      activeGrid:UpdateGridData("gameId", gameId)
 
-     SetupChessBoard(Game.board)
-
      activeGrid.onClick = function(cell, button)
           Logger:Debug(("%s Clicked"):format(json.encode(cell)))
           if not selectedCell then
@@ -76,12 +76,16 @@ RegisterNetEvent("mate-chess:SyncFullState", (function(gameId, Game)
      end
 
      Citizen.CreateThread((function()
+          activeGrid:update()
+          SetupChessBoard(Game.board)
+
           while activeGrid do
                activeGrid:update()
                Wait(1)
           end
           Logger:Info("Active grid have destoryed")
      end))
+
 end))
 
 
@@ -92,6 +96,13 @@ RegisterNetEvent('mate-chess:UpdateBoard', function(boardData, data)
           for col = 0, 7 do
                activeGrid:WriteCell2({ row = row, col = col }, boardData[row][col])
           end
+     end
+
+     local function Info(message)
+          lib.notify({
+               description = message,
+               duration = 3000
+          })
      end
 
      if data then
@@ -124,10 +135,41 @@ end)
 --- @param move {from: {row: number, col: number}, to: {row: number, col: number}}
 RegisterNetEvent("mate-chess:MoveResult", (function(success, msg, move)
      if success then
+          if (modelCache[move.to.row] and modelCache[move.to.row][move.to.col]) then
+               DeleteEntity(modelCache[move.to.row][move.to.col])
+               modelCache[move.to.row][move.to.col] = nil
+          end
+
           MovePieceSmooth(move.from, move.to, 800)
      end
+     ClearHighlights()
      Logger:Debug("MoveResult", success, msg)
 end))
+
+AddEventHandler("onResourceStop", function(resourceName)
+     if resourceName ~= GetCurrentResourceName() then return end
+
+     if modelCache then
+           for row, cols in pairs(modelCache) do
+               for col, entity in pairs(cols) do
+                   if DoesEntityExist(entity) then
+                       DeleteEntity(entity)
+                   end
+               end
+           end
+
+           modelCache = {}
+           Logger:Info("All chess piece models have been deleted due to resource stop.")
+       end
+
+     if activeGrid then
+          activeGrid:Destroy()
+          activeGrid = nil
+          Logger:Info("Active grid has been destoryed")
+     end
+
+
+end)
 
 --
 -- Functions
@@ -137,18 +179,18 @@ function SetupChessBoard(board)
      for row = 0, 7 do
           for col = 0, 7 do
                local cellData = board[row][col]
+               SpawnPiece({ row = row, col = col }, cellData)
                activeGrid:WriteCell2({ row = row, col = col }, cellData)
-               SpawnPiece({row= row, col=col}, cellData)
           end
      end
 
-     activeGrid.customDraw = (function(cell)
-          local meta = activeGrid:ReadCell(cell)
-          if meta and meta.piece then
-               Draw3DText(cell.position.x, cell.position.y, cell.position.z,
-                    ("%s (%s)"):format(meta.piece, meta.color), 255, 255, 255, false, 4)
-          end
-     end)
+     -- activeGrid.customDraw = (function(cell)
+     --      local meta = activeGrid:ReadCell(cell)
+     --      if meta and meta.piece then
+     --           Draw3DText(cell.position.x, cell.position.y, cell.position.z,
+     --                ("%s (%s)"):format(meta.piece, meta.color), 255, 255, 255, false, 4)
+     --      end
+     -- end)
 
      Logger:Info("Board loaded from server state.")
 end
@@ -183,7 +225,7 @@ function MovePieceSmooth(fromCell, toCell, duration)
           return Logger:Error(("No piece on %s to move it !"):format(json.encode(fromCell)))
      end
 
-     local startPos = activeGrid:GetCellWorldPos(fromCell.row, fromCell.col)
+     local startPos = GetEntityCoords(entity)
      local endPos = activeGrid:GetCellWorldPos(toCell.row, toCell.col)
 
     local startTime = GetGameTimer()
@@ -196,18 +238,27 @@ function MovePieceSmooth(fromCell, toCell, duration)
 
          local x = Lerp(startPos.x, endPos.x, t)
          local y = Lerp(startPos.y, endPos.y, t)
-         local z = Lerp(startPos.z, endPos.z, t)
 
-         SetEntityCoordsNoOffset(entity, x,y,z,false,false,false)
+         SetEntityCoordsNoOffset(entity, x,y,startPos.z,false,false,false)
+
          Wait(1)
     end
 
-    SetEntityCoordsNoOffset(entity, endPos.x, endPos.y, endPos.z, false, false, false)
+    SetEntityCoordsNoOffset(entity, endPos.x, endPos.y, startPos.z, false, false, false)
+    PlaceObjectOnGroundProperly(entity)
 
     modelCache[toCell.row] = modelCache[toCell.row] or {}
     modelCache[toCell.row][toCell.col] = entity
 
     modelCache[fromCell.row][fromCell.col] = nil
+end
+
+function GetPieceHeading(color)
+     local baseHeading = (activeGrid.rotationDeg or 0.0) + 90
+     if color == "black" then
+          return (baseHeading + 180.0) % 360.0
+     end
+     return baseHeading
 end
 
 --- @param cell {row: number, col: number}
@@ -221,13 +272,28 @@ function SpawnPiece(cell, pieceData)
           return
      end
 
-     local cellPos = activeGrid:GetCellWorldPos(cell.row, cell.col)
+     if not activeGrid then
+          return Logger:Error("No active grid to make chessPices")
+     end
 
-     local obj = Functions.makeProp({
-          prop = modelName,
-          pos = vec4(cellPos.x,cellPos.y,cellPos.z, 0.0) -- TODO use the correct heading
-     }, true, false)
 
+     local cellPos = activeGrid:GetCellWorldPos(cell.row,cell.col)
+
+     if not cellPos then
+          return Logger:Error("Failed to get cell position")
+     end
+
+     lib.requestModel(modelName)
+
+     if not HasModelLoaded(modelName) then
+          return Logger:Error("Failed to load model: ", modelName)
+     end
+
+     local obj = CreateObject(modelName, cellPos.x,cellPos.y,cellPos.z, false, true, false)
+     SetEntityHeading(obj, GetPieceHeading(pieceData.color)) -- use correct heading
+     FreezeEntityPosition(obj, true)
+
+     SetModelAsNoLongerNeeded(modelName)
      modelCache[cell.row] = modelCache[cell.row] or {}
      modelCache[cell.row][cell.col] = obj
 end
@@ -258,8 +324,7 @@ Draw3DText = (function(x, y, z, text, r, g, b, useScale, font)
 
 
      if font then
-               useFont = font
-          end
+          useFont = font
      end
 
      SetTextScale(0.35 * scale, 0.35 * scale)
