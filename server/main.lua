@@ -109,10 +109,15 @@ RegisterNetEvent("mate-chess:TryMove", function(gameId, fromCell, toCell)
      local source = source
      local success, msg = ApplyMove(gameId, fromCell, toCell, source)
 
-     TriggerClientEvent('mate-chess:MoveResult', source, success, msg, {
+     Helper.SendEventToAllPlayer(gameId, "mate-chess:MoveResult", success, msg, {
           from = fromCell,
           to = toCell
      })
+
+     -- TriggerClientEvent('mate-chess:MoveResult', source, success, msg, {
+     --      from = fromCell,
+     --      to = toCell
+     -- })
 end)
 
 lib.callback.register("mate-chess:IsGameExists", (function(source, gameId)
