@@ -74,6 +74,14 @@ function Helper.ReadCell(gameId, cell)
      return meta
 end
 
+function Helper.SendEventToAllPlayer(gameId, eventName, ...)
+     local gameMeta = Games[gameId]
+
+     for playerId, _ in pairs(gameMeta.players) do
+          TriggerClientEvent(eventName, tonumber(playerId), ...)
+     end
+end
+
 function Helper.SyncGame(gameId)
      local gameMeta = Games[gameId]
 
